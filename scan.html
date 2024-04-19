@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan QR Codes and Record Scans</title>
+    <style>
+        /* Add your CSS styles here */
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        video {
+            width: 100%;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        .scan-info {
+            color: green;
+        }
+        .error-info {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Scan QR Codes and Record Scans</h1>
+        <video id="video" playsinline></video>
+        <p id="info" class="scan-info"></p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.3.1/dist/jsQR.min.js"></script>
+    <script>
+        // Function to load QR codes from localStorage
+        function loadQRCodes() {
+            return JSON.parse(localStorage.getItem('qrList')) || [];
+        }
+
+        // Function to save scan record to localStorage
+        function saveScanRecord(qrCode, timestamp) {
+            var scanRecords = JSON.parse(localStorage.getItem('scanRecords')) || [];
+            scanRecords.push({ qrCode: qrCode, timestamp: timestamp });
+            localStorage.setItem('scanRecords', JSON.stringify(scanRecords));
+        }
+
+        // Function to check if a QR code has been scanned within a certain time frame
+        function isQRCodeScannedRecently(qrCode, timeThreshold) {
+            var scanRecords = JSON.parse(localStorage.getItem('scanRecords')) || [];
+            var currentTime = new Date().getTime();
+            for (var i = 0; i < scanRecords.length; i++) {
+                if (scanRecords[i].qrCode === qrCode && currentTime - scanRecords[i].timestamp < timeThreshold) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Function to start camera and continuously scan QR codes
+        function startCamera() {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                .then(function(stream) {
+                    var video = document.getElementById('video');
+                    video.srcObject = stream;
+                    video.play();
+
+                    var canvasElement = document.createElement('canvas');
+                    var canvas = canvasElement.getContext('2d');
+
+                    // Load QR codes
+                    var qrCodes = loadQRCodes();
+
+                    // Continuous QR code scanning
+                    setInterval(function() {
+                        canvasElement.width = video.videoWidth;
+                        canvasElement.height = video.videoHeight;
+                        canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+                        var imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+                        try {
+                            var code = jsQR(imageData.data, imageData.width, imageData.height);
+                            if (code && !isQRCodeScannedRecently(code.data, 10000)) { // Check if QR code is not scanned within the last 10 seconds
+                                saveScanRecord(code.data, new Date().getTime()); // Record scan
+                                document.getElementById('info').textContent = 'QR code scanned successfully: ' + code.data;
+                                document.getElementById('info').classList.add('scan-info');
+                            }
+                        } catch (error) {
+                            console.error(error);
+                            document.getElementById('info').textContent = 'Error scanning QR code: ' + error;
+                            document.getElementById('info').classList.add('error-info');
+                        }
+                    }, 1000);
+                })
+                .catch(function(error) {
+                    console.error('Error accessing camera:', error);
+                    alert('Error accessing camera. Please make sure your camera is connected and accessible.');
+                });
+        }
+
+        // Start camera and continuous QR code scanning
+        startCamera();
+    </script>
+</body>
+</html>
