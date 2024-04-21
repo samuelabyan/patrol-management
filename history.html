@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patrol Management - History</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+       <div class="container">
+        <h1>Scan History</h1>
+        <button onclick="deleteOldItems(2)">Delete Items Older Than 2 Days</button>
+        <button onclick="deleteOldItems(7)">Delete Items Older Than 7 Days</button>
+        <button onclick="deleteOldItems(30)">Delete Items Older Than 30 Days</button>
+        <button onclick="downloadAsExcel()">Download as Excel</button>
+        <button onclick="sendEmail()">Send Email with Last 7 Days History</button>
+        <ul id="scanHistory"></ul>
+		</br></br></br></br></br>
+    </div>
+
+    <script>
+        // Function to load scan records from localStorage and display them
+        function loadScanHistory() {
+            var scanRecords = JSON.parse(localStorage.getItem('scanRecords')) || [];
+            scanRecords.sort((a, b) => b.timestamp - a.timestamp); // Sort records from new to old
+            var scanHistoryElement = document.getElementById('scanHistory');
+            scanHistoryElement.innerHTML = ''; // Clear existing scan history
+            scanRecords.forEach(function(record) {
+                var li = document.createElement('li');
+                li.textContent = record.qrCode + ' - ' + new Date(record.timestamp).toLocaleString();
+                scanHistoryElement.appendChild(li);
+            });
+        }
+
+        // Load scan history when page is loaded
+        loadScanHistory();
+
+        // Function to delete items older than a certain number of days
+        function deleteOldItems(days) {
+            var currentTime = new Date().getTime();
+            var scanRecords = JSON.parse(localStorage.getItem('scanRecords')) || [];
+            var updatedRecords = scanRecords.filter(function(record) {
+                return (currentTime - record.timestamp) / (1000 * 60 * 60 * 24) <= days;
+            });
+            localStorage.setItem('scanRecords', JSON.stringify(updatedRecords));
+            loadScanHistory(); // Reload scan history after deletion
+        }
+
+        // Function to generate an Excel file with last 7 days of history and open default mail client
+        function sendEmail() {
+            var scanRecords = JSON.parse(localStorage.getItem('scanRecords')) || [];
+            var last7DaysRecords = scanRecords.filter(function(record) {
+                return (new Date().getTime() - record.timestamp) / (1000 * 60 * 60 * 24) <= 7;
+            });
+            if (last7DaysRecords.length === 0) {
+                alert('No scan records from the last 7 days to send.');
+                return;
+            }
+            var body = "Scan records from the last 7 days:\n\n";
+            last7DaysRecords.forEach(function(record) {
+                var dateTime = new Date(record.timestamp);
+                var date = dateTime.toLocaleDateString();
+                var time = dateTime.toLocaleTimeString();
+                body += record.qrCode + ' - ' + date + ' ' + time + '\n';
+            });
+            body += "\n\nSent from Patrol Management System";
+            var subject = "Patrol Management: " + getLast7DaysDates();
+            var recipient = "inboxtest@test.am";
+            window.location.href = "mailto:" + recipient + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+        }
+
+        // Function to get the dates of the last 7 days
+        function getLast7DaysDates() {
+            var today = new Date();
+            var dates = [];
+            for (var i = 6; i >= 0; i--) {
+                var date = new Date(today);
+                date.setDate(date.getDate() - i);
+                dates.push(date.toLocaleDateString());
+            }
+            return dates.join(' - ');
+        }
+    </script>
+
+<div class="bottom-menu">
+  <a href="manage.html" class="menu-item"><img src="resources/map-alt-regular-24.png" alt="Management"></a> <!-- Management icon -->
+  <a href="index.html" class="menu-item highlighted"><img src="resources/scan-regular-24.png" alt="Scan"></a> <!-- Scan icon -->
+  <a href="history.html" class="menu-item"><img src="resources/history-regular-24.png" alt="History"></a> <!-- History icon -->
+</div>
+	
+</body>
+</html>

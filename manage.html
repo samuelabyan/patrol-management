@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patrol Management - Manager</title>
+<link rel="stylesheet" href="styles.css">
+    <style>
+        /* Add your CSS styles here */
+        body {
+            font-family: Arial, sans-serif;
+			overflow: scroll;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 5px;
+        }
+        .delete-btn {
+            background-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+       <div class="container">
+        <h1>Add Locations and Generate QR Codes</h1>
+        <div class="create-area">
+            <h2>Create Patrol Area</h2>
+            <input type="text" id="areaName" placeholder="Enter area name">
+            <button onclick="createQR()">Create QR Code</button>
+        </div>
+        <div class="qr-codes">
+            <h2>QR Codes</h2>
+            <ul id="qrList"></ul>
+        </div>
+        <button onclick="clearStorage()" class="delete-btn">Delete Browser Storage</button>
+		</br></br></br></br></br>
+    </div>
+
+    <script>
+        // Function to generate a unique ID
+        function generateId() {
+            return '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Function to create QR Code
+        function createQR() {
+            var areaName = document.getElementById('areaName').value;
+            var qrCode = areaName; // Use area name as QR code
+            var qrList = JSON.parse(localStorage.getItem('qrList')) || []; // Retrieve existing QR codes or initialize empty array
+            qrList.push({ areaName: areaName, qrCode: qrCode }); // Add new QR code to the list
+            localStorage.setItem('qrList', JSON.stringify(qrList)); // Save updated list to localStorage
+
+            // Display QR code in the list
+            var qrListElement = document.getElementById('qrList');
+            var li = document.createElement('li');
+            li.textContent = areaName;
+            qrListElement.appendChild(li);
+
+            // Generate QR code image and append it to the list
+            var qrCodeElement = document.createElement('img');
+            qrCodeElement.src = 'https://api.qrserver.com/v1/create-qr-code/?data=' + encodeURIComponent(qrCode);
+            qrListElement.appendChild(qrCodeElement);
+        }
+
+        // Function to delete browser storage
+        function clearStorage() {
+            localStorage.clear();
+            alert('Browser storage cleared successfully.');
+            location.reload();
+        }
+
+        // Function to load data from localStorage and populate the page
+        function loadDataFromStorage() {
+            var qrList = JSON.parse(localStorage.getItem('qrList')) || [];
+            var qrListElement = document.getElementById('qrList');
+            qrList.forEach(function(item) {
+                var li = document.createElement('li');
+                li.textContent = item.areaName;
+                qrListElement.appendChild(li);
+
+                var qrCodeElement = document.createElement('img');
+                qrCodeElement.src = 'https://api.qrserver.com/v1/create-qr-code/?data=' + encodeURIComponent(item.qrCode);
+                qrListElement.appendChild(qrCodeElement);
+            });
+        }
+
+        // Load data from localStorage when the page is loaded
+        window.addEventListener('load', loadDataFromStorage);
+    </script>
+
+<div class="bottom-menu">
+  <a href="manage.html" class="menu-item"><img src="resources/map-alt-regular-24.png" alt="Management"></a> <!-- Management icon -->
+  <a href="index.html" class="menu-item highlighted"><img src="resources/scan-regular-24.png" alt="Scan"></a> <!-- Scan icon -->
+  <a href="history.html" class="menu-item"><img src="resources/history-regular-24.png" alt="History"></a> <!-- History icon -->
+</div>
+	
+</body>
+</html>
