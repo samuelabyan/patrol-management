@@ -7,4 +7,6 @@ The patrol history can be downloaded as an Excel file or emailed.
 <br>
 The application uses the browser's local memory to store all information. You can easily make changes to move it to your database.
 <br>
+<i>Design and mobile performance are not finalized.</i>
+<br>
 Camera permissions are required for scanning QR codes.
